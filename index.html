@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Interface</title>
+  <!-- Bootstrap CSS for styling -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Weather Forecast</h2>
+    <form id="weatherForm">
+      <div class="form-group">
+        <label for="citySelect">Select City:</label>
+        <select class="form-control" id="citySelect">
+          <!-- Options will be populated here by JavaScript -->
+        <script>
+            //parseCSV(`C:\Users\jessi\OneDrive\Desktop\Software Projects\weather app\city_coordinates.csv`)
+            // Assuming you have an array of cities with their names and coordinates
+            const cities = [
+                { name: "New York, USA", latitude: 40.7128, longitude: -74.0060 },
+                { name: "London, UK", latitude: 51.5074, longitude: -0.1278 },
+                { name: "Tokyo, Japan", latitude: 35.6895, longitude: 139.6917 },
+                { name: "Auckland, NZ", latitude: 12, longitude: 174}
+
+
+                // Add more cities as needed
+            ];
+
+            const citySelect = document.getElementById('citySelect');
+            cities.forEach(city => {
+                let option = new Option(city.name, JSON.stringify({latitude: city.latitude, longitude: city.longitude}));
+                citySelect.add(option);
+            });
+            populateDropdown(cities);
+        </script>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Get Forecast</button>
+    </form>
+    <!-- Result Section -->
+    <div id="weatherResult" class="mt-4">
+      <!-- Weather results will be displayed here -->
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Custom JavaScript for fetching weather data and populating UI -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('C:\Users\jessi\OneDrive\Desktop\Software Projects\weather app\city_coordinates.csv')
+        .then(response => response.text())
+        .then(parseCSV)
+        .then(populateDropdown);
+
+      document.getElementById('weatherForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const selectedOption = document.getElementById('citySelect').selectedOptions[0];
+        const coords = JSON.parse(selectedOption.value);
+        fetchWeatherData(coords.latitude, coords.longitude);
+      });
+    });
+
+    function parseCSV(csvData) {
+      const lines = csvData.split('\n');
+      lines.shift(); // Remove the header
+      return lines.map(line => {
+        const [latitude, longitude, city, country] = line.split(',');
+        return { name: `${city}, ${country}`, latitude, longitude };
+      }).filter(city => city.name); // Filter out any empty lines or malformed data
+    }
+
+    function populateDropdown(cities) {
+      const citySelect = document.getElementById('citySelect');
+      cities.forEach(city => {
+        let option = new Option(city.name, JSON.stringify({latitude: city.latitude, longitude: city.longitude}));
+        citySelect.add(option);
+      });
+    }
+
+    function fetchWeatherData(latitude, longitude) {
+      const apiEndpoint = `http://www.7timer.info/bin/api.pl?lon=${longitude}&lat=${latitude}&product=astro&output=json`;
+      fetch(apiEndpoint)
+        .then(response => response.json())
+        .then(displayWeatherData)
+        .catch(error => console.error('Error fetching weather data:', error));
+    }
+
+    function displayWeatherData(data) {
+  const weatherResult = document.getElementById('weatherResult');
+
+  if (data.dataseries && data.dataseries.length > 0) {
+    const firstDataSeries = data.dataseries[0];
+    const weatherImage = getWeatherImage(firstDataSeries.weather); // A function to determine the image based on weather data
+    
+    weatherResult.innerHTML = `
+      <h3>Weather Details</h3>
+      <p>Temperature: ${firstDataSeries.temp2m}°C</p>
+      <p>Cloud Cover: ${firstDataSeries.cloudcover}</p>
+      <p>Seeing: ${firstDataSeries.seeing}</p>
+      <p>Transparency: ${firstDataSeries.transparency}</p>
+      <p>Predicted Weather: ${firstDataSeries.weather}</p>
+      <p>Wind Speed: ${firstDataSeries.wind10m.speed} km/h</p>
+      <img src="images/${weatherImage}" alt="Weather condition image">
+      <!-- Add more weather details as needed -->
+    `;
+  } else {
+    weatherResult.innerHTML = '<p>No weather data available.</p>';
+  }
+}
+
+function getWeatherImage(weatherCondition) {
+  // Replace with actual logic to determine image based on the weather condition
+  // This is a placeholder example
+  switch (weatherCondition) {
+    case 'clear':
+      return 'clear.png';
+    case 'rain':
+      return 'rain.png';
+    case 'cloudy':
+      return 'cloudy.png';
+    case 'snow':
+      return 'snow.png';
+    case 'fog':
+      return 'fog.png';
+    // ... add more cases for different weather conditions
+    default:
+      return 'rain.png'; // A default image if the condition is unknown
+  }
+}
+
+    
+  </script>
+</body>
+</html>
